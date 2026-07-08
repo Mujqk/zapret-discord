@@ -1,0 +1,34 @@
+IDI_ICON1 ICON "..\\Zapret.ico"
+
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041904b0"
+        BEGIN
+            VALUE "CompanyName", "Sayurin"
+            VALUE "FileDescription", "Zapret GUI - Modern bypass utility"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "Zapret.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Sayurin"
+            VALUE "OriginalFilename", "Zapret.exe"
+            VALUE "ProductName", "Zapret by Sayurin"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x419, 1200
+    END
+END
