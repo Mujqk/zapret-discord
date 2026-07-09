@@ -7,7 +7,7 @@
 <a href="https://github.com/Mujqk/zapret-discord-youtube/releases/latest/download/Zapret.exe"><img src="https://img.shields.io/badge/⬇_Zapret.exe-brightgreen?style=for-the-badge&logo=windows" alt="Скачать"/></a>
 
   ## О zapret
-Тот же самый запрет что https://github.com/Flowseal/zapret-discord-youtube, но обвернутый в GUI
+Тот же самый запрет что [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube), но обвернутый в GUI
 
 Написан на C++, не нужно докачивать дополнительные библиотеки.
 
@@ -19,6 +19,6 @@
   <br>
 
   <h2>
-    GUI сделан NazeSayurin?
+    GUI сделаk NazeSayurin?
     
-  Спасибо <ins>Flowseal</ins> за сам запрет.
+  Спасибо <ins>[Flowseal](https://github.com/Flowseal)</ins> за сам запрет.
