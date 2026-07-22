@@ -1,4 +1,5 @@
 #pragma once
+
 #include <functional>
 #include <string>
 #include <vector>
@@ -6,26 +7,31 @@
 
 class ZapretManager {
 public:
+    using LogCallback = std::function<void(const std::string&)>;
+
     ZapretManager();
     ~ZapretManager();
 
-    std::vector<std::wstring> GetAvailableAlts();
+    ZapretManager(const ZapretManager&) = delete;
+    ZapretManager& operator=(const ZapretManager&) = delete;
+    ZapretManager(ZapretManager&&) noexcept = default;
+    ZapretManager& operator=(ZapretManager&&) noexcept = default;
+
+    // Возвращает список доступных конфигурационных скриптов (.bat) из директории ядра.
+    [[nodiscard]] std::vector<std::wstring> GetAvailableAlts() const;
     
-    // Starts the given batch file
+    // Запускает выбранную альтернативную конфигурацию обхода.
     bool StartAlt(const std::wstring& altName);
-    
-    // Stops everything launched by StartAlt (and only that — see .cpp)
+
+    // Останавливает только процессы, запущенные данной системой (через Job Object).
     void StopAlt();
 
-    // Utility: test if an alt is working by starting it, waiting, testing http, and stopping.
-    bool TestAlt(const std::wstring& altName, std::function<void(const std::string&)> logCallback = nullptr);
+    // Проверяет работоспособность конкретной конфигурации.
+    bool TestAlt(const std::wstring& altName, LogCallback logCallback = nullptr);
 
 private:
-    std::wstring corePath;
-    // All processes started via StartAlt are assigned to this Job Object.
-    // Windows automatically adds their child processes too, so StopAlt can
-    // terminate exactly (and only) what we launched — instead of the old
-    // approach of killing every cmd.exe/winws.exe system-wide by name,
-    // which could kill unrelated processes belonging to the user.
-    HANDLE hJob = NULL;
+    std::wstring m_corePath;
+    HANDLE m_hJob{nullptr};
 };
+
+

@@ -1,60 +1,58 @@
 #include "SelfInstaller.h"
 #include "ShortcutUtils.h"
+
 #include <windows.h>
 #include <shlobj.h>
-#include <string>
 #include <filesystem>
-#include <iostream>
+#include <string>
 
 namespace fs = std::filesystem;
 
 bool SelfInstaller::CheckAndInstall() {
-    WCHAR path[MAX_PATH];
-    GetModuleFileNameW(NULL, path, MAX_PATH);
-    fs::path currentExePath(path);
-    fs::path currentDir = currentExePath.parent_path();
-
-    WCHAR docsPath[MAX_PATH];
-    if (FAILED(SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, 0, docsPath))) {
+    WCHAR path[MAX_PATH]{};
+    if (GetModuleFileNameW(nullptr, path, MAX_PATH) == 0) {
         return false;
     }
-    fs::path targetDir = fs::path(docsPath) / L"Zapret";
 
-    // If we are already running from the target directory, do nothing.
+    const fs::path currentExePath(path);
+    const fs::path currentDir = currentExePath.parent_path();
+
+    WCHAR docsPath[MAX_PATH]{};
+    if (FAILED(SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, 0, docsPath))) {
+        return false;
+    }
+
+    const fs::path targetDir = fs::path(docsPath) / L"Zapret";
+
+    // If running from target directory, no install is needed.
     if (currentDir.wstring().find(targetDir.wstring()) == 0) {
         return false;
     }
 
-    // We are not in Documents\Zapret yet. Perform install.
     try {
         fs::create_directories(targetDir);
 
-        // Copy Zapret.exe
-        fs::path targetExePath = targetDir / currentExePath.filename();
+        const fs::path targetExePath = targetDir / currentExePath.filename();
         fs::copy_file(currentExePath, targetExePath, fs::copy_options::overwrite_existing);
 
-        // Copy zapret_core folder
-        fs::path coreSource = currentDir / L"zapret_core";
-        fs::path coreTarget = targetDir / L"zapret_core";
+        const fs::path coreSource = currentDir / L"zapret_core";
+        const fs::path coreTarget = targetDir / L"zapret_core";
         if (fs::exists(coreSource)) {
             fs::copy(coreSource, coreTarget, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
         }
 
-        // Create shortcut
         ShortcutUtils::CreateDesktopShortcut(targetExePath.wstring(), L"Zapret");
 
-        // Relaunch from the new location
-        SHELLEXECUTEINFOW sei = { sizeof(sei) };
+        SHELLEXECUTEINFOW sei{ sizeof(sei) };
         sei.fMask = SEE_MASK_NOASYNC;
         sei.lpVerb = L"open";
         sei.lpFile = targetExePath.c_str();
         sei.nShow = SW_SHOWNORMAL;
         ShellExecuteExW(&sei);
 
-        return true; // We installed and relaunched, so this instance should exit.
-
-    } catch (const std::exception& e) {
-        // Fallback
+        return true;
+    } catch (const std::exception&) {
         return false;
     }
 }
+

@@ -1,7 +1,11 @@
 #pragma once
+
 #include <string>
 
 namespace ShortcutUtils {
-    // Creates a shortcut on the Desktop pointing to the specified target path.
+    // Создает ярлык (.lnk) на Рабочем столе с указанием рабочей директории.
     bool CreateDesktopShortcut(const std::wstring& targetPath, const std::wstring& shortcutName);
 }
+
+
+

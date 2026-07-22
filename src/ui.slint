@@ -4,7 +4,7 @@ export component AppWindow inherits Window {
     title: "Zapret by Sayurin (Slint Edition)";
     no-frame: true;
     
-    // Dynamic Theme parameters passed from C++ Theme.h
+    // Динамические параметры темы из C++ Theme.h
     in property <color> color-bg: #0f0f13;
     in property <color> color-card-bg: #15151c;
     in property <color> color-text: #f5f6f8;
@@ -24,7 +24,7 @@ export component AppWindow inherits Window {
     width: window-width * 1px;
     height: window-height * 1px;
 
-    // State properties
+    // Свойства состояния
     in property <string> status-text: "Отключено";
     in property <string> version-text: "1.0.0";
     in property <[string]> available-alts: [];
@@ -33,7 +33,7 @@ export component AppWindow inherits Window {
     in property <bool> is-connected: false;
     in property <bool> is-searching: false;
 
-    // Callbacks
+    // Сигналы обратного вызова (Callbacks)
     callback start-clicked();
     callback stop-clicked();
     callback auto-search-clicked();
@@ -44,7 +44,7 @@ export component AppWindow inherits Window {
     callback close-clicked();
     callback minimize-clicked();
 
-    // Layout
+    // Главный контейнер разметки
     VerticalLayout {
         padding-left: 30px;
         padding-right: 30px;
@@ -52,12 +52,13 @@ export component AppWindow inherits Window {
         padding-bottom: 20px;
         spacing: 20px;
 
-        // Custom Titlebar
+        // Панель заголовка окна
         HorizontalLayout {
             height: 45px;
             alignment: space-between;
 
-            // Brand
+            // Блок логотипа
+
             HorizontalLayout {
                 spacing: 12px;
                 alignment: start;
@@ -76,12 +77,12 @@ export component AppWindow inherits Window {
                 }
             }
 
-            // Window controls
+            // Управление окном
             HorizontalLayout {
                 spacing: 10px;
                 alignment: end;
                 
-                // Minimize Button
+                // Кнопка свертывания
                 Rectangle {
                     width: 32px;
                     height: 32px;
@@ -103,7 +104,7 @@ export component AppWindow inherits Window {
                     }
                 }
 
-                // Close Button
+                // Кнопка закрытия
                 Rectangle {
                     width: 32px;
                     height: 32px;
@@ -127,7 +128,7 @@ export component AppWindow inherits Window {
             }
         }
 
-        // Status Card
+        // Карточка статуса
         Rectangle {
             height: 100px;
             background: color-card-bg;
@@ -157,7 +158,7 @@ export component AppWindow inherits Window {
                     }
                 }
 
-                // LED Status Circle
+                // Индикатор состояния (LED)
                 Rectangle {
                     width: 44px;
                     height: 44px;
@@ -172,7 +173,7 @@ export component AppWindow inherits Window {
             }
         }
 
-        // Control Panel Card
+        // Панель управления
         Rectangle {
             height: 250px;
             background: color-card-bg;
@@ -185,7 +186,7 @@ export component AppWindow inherits Window {
                 spacing: 16px;
                 alignment: space-between;
 
-                // Section Label
+                // Метка секции
                 Text {
                     text: "НАСТРОЙКИ ОБХОДА";
                     font-size: 12px;
@@ -193,19 +194,19 @@ export component AppWindow inherits Window {
                     color: color-text-disabled;
                 }
 
-                // Strategy ComboBox (Standard widget styled via properties or custom rectangle wrapper)
+                // Выпадающий список выбора стратегии
                 ComboBox {
                     model: available-alts;
                     current-index: current-alt-idx;
                     enabled: !is-connected && !is-searching;
                 }
 
-                // Action Buttons (Row 1)
+                // Кнопки действия (Ряд 1)
                 HorizontalLayout {
                     spacing: 12px;
                     height: 48px;
 
-                    // Main Run/Stop Button
+                    // Главная кнопка Запустить/Остановить
                     Button {
                         text: is-connected ? "ОСТАНОВИТЬ" : "ЗАПУСТИТЬ";
                         enabled: !is-searching;
@@ -219,7 +220,7 @@ export component AppWindow inherits Window {
                         }
                     }
 
-                    // Auto-search Strategy Button
+                    // Кнопка автоподбора стратегии
                     Button {
                         text: is-searching ? "ПОИСК..." : "АВТО-ПОИСК";
                         enabled: !is-connected && !is-searching;
@@ -227,7 +228,7 @@ export component AppWindow inherits Window {
                     }
                 }
 
-                // Action Buttons (Row 2)
+                // Кнопки действия (Ряд 2)
                 HorizontalLayout {
                     spacing: 12px;
                     height: 40px;
@@ -247,7 +248,7 @@ export component AppWindow inherits Window {
             }
         }
 
-        // Event Logs Section
+        // Секция журнала событий
         VerticalLayout {
             spacing: 8px;
             Text {
@@ -292,10 +293,11 @@ export component AppWindow inherits Window {
             }
         }
 
-        // Footer Section
+        // Подвал окна
         HorizontalLayout {
             alignment: space-between;
             height: 36px;
+
 
             // Links / References
             VerticalLayout {
@@ -322,13 +324,25 @@ export component AppWindow inherits Window {
                 }
             }
 
-            // Open Files Button
-            Button {
-                text: "ОТКРЫТЬ ФАЙЛЫ";
-                width: 150px;
-                height: 32px;
-                clicked => { root.open-files-clicked(); }
+            // Кнопки управления файлами и службой
+            HorizontalLayout {
+                spacing: 10px;
+
+                Button {
+                    text: "СЛУЖБА";
+                    width: 110px;
+                    height: 32px;
+                    clicked => { root.start-service-clicked(); }
+                }
+
+                Button {
+                    text: "ОТКРЫТЬ ФАЙЛЫ";
+                    width: 145px;
+                    height: 32px;
+                    clicked => { root.open-files-clicked(); }
+                }
             }
         }
     }
 }
+

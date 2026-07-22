@@ -1,10 +1,14 @@
 #pragma once
-#include <string>
+
 #include <functional>
+#include <string>
 
 namespace AutoUpdater {
-    // Check for updates and install in background. 
-    // logCallback is called with status messages.
-    // Returns true if an update was installed, false if up to date or failed.
-    bool CheckAndUpdate(std::function<void(const std::string&)> logCallback);
+    using LogCallback = std::function<void(const std::string&)>;
+
+    // Проверяет наличие новых релизов на GitHub и выполняет автоматическое обновление.
+    bool CheckAndUpdate(LogCallback logCallback);
 }
+
+
+
