@@ -86,8 +86,7 @@ static std::string ExtractJsonString(const std::string& json, const std::string&
     return value;
 }
 
-// Finds the browser_download_url of the first release asset whose name
-// satisfies the given predicate.
+
 template <typename Pred>
 static std::string FindAssetUrl(const std::string& json, Pred matches) {
     size_t assetsPos = json.find("\"assets\"");
@@ -108,21 +107,17 @@ static std::string FindAssetUrl(const std::string& json, Pred matches) {
     return "";
 }
 
-// Finds the direct download URL of the first .zip asset attached to the
-// release JSON. Falls back to the source zipball if no asset is found.
+
 static std::string FindZipAssetUrl(const std::string& json) {
     std::string url = FindAssetUrl(json, [](const std::string& name) {
         return name.size() > 4 && _stricmp(name.c_str() + name.size() - 4, ".zip") == 0;
     });
     if (!url.empty()) return url;
-    // Fallback: use the auto-generated "Source code (zip)" archive for the tag.
+
     return ExtractJsonString(json, "zipball_url", 0);
 }
 
-// Flowseal publishes a SHA256SUMS.txt asset alongside every release. If
-// present, we download it and verify extracted files against it before
-// copying anything into zapret_core, so a corrupted/tampered download never
-// gets installed silently.
+
 static std::string FindChecksumsAssetUrl(const std::string& json) {
     return FindAssetUrl(json, [](const std::string& name) {
         return _stricmp(name.c_str(), "SHA256SUMS.txt") == 0;
@@ -141,8 +136,7 @@ bool AutoUpdater::CheckAndUpdate(std::function<void(const std::string&)> logCall
         fs::remove(errFile);
     }
 
-    // Only check the flag if the core actually exists and seems complete.
-    // If core is missing or empty, we MUST download it.
+
     bool coreExists = fs::exists(corePath) && fs::exists(corePath / L"utils");
     
     if (coreExists) {
@@ -181,7 +175,7 @@ bool AutoUpdater::CheckAndUpdate(std::function<void(const std::string&)> logCall
         return false;
     }
 
-    // Normalize "v1.9.9d" -> "1.9.9d" so it matches the local version.txt format.
+
     std::string latestVersion = latestTag;
     if (!latestVersion.empty() && (latestVersion[0] == 'v' || latestVersion[0] == 'V')) {
         latestVersion.erase(0, 1);
@@ -209,17 +203,7 @@ bool AutoUpdater::CheckAndUpdate(std::function<void(const std::string&)> logCall
     std::wstring zipUrlW(zipUrl.begin(), zipUrl.end());
     std::wstring sumsUrlW(sumsUrl.begin(), sumsUrl.end());
 
-    // Downloads the release archive and extracts it into zapret_core,
-    // overwriting outdated files while preserving the bin/lists/utils
-    // subfolder structure. NOTE: we deliberately use robocopy instead of
-    // "Copy-Item -Path X\* -Destination Y -Recurse" — that wildcard+recurse
-    // combo is known to flatten nested subfolders (their contents get
-    // dumped straight into the destination root instead of keeping the
-    // bin/, lists/, utils/ layout), which broke winws.exe/WinDivert paths.
-    //
-    // If SHA256SUMS.txt is present in the release, every extracted file it
-    // lists is hashed and compared before robocopy runs — a mismatch aborts
-    // the update instead of installing a corrupted/tampered download.
+
     std::wstring psCommand = L"powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command \""
         L"try { "
         L"  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; "
