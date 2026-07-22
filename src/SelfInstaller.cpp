@@ -14,18 +14,18 @@ bool SelfInstaller::CheckAndInstall() {
     fs::path currentExePath(path);
     fs::path currentDir = currentExePath.parent_path();
 
-    WCHAR pfPath[MAX_PATH];
-    if (FAILED(SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, pfPath))) {
+    WCHAR docsPath[MAX_PATH];
+    if (FAILED(SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, 0, docsPath))) {
         return false;
     }
-    fs::path targetDir = fs::path(pfPath) / L"Zapret";
+    fs::path targetDir = fs::path(docsPath) / L"Zapret";
 
     // If we are already running from the target directory, do nothing.
     if (currentDir.wstring().find(targetDir.wstring()) == 0) {
         return false;
     }
 
-    // We are not in Program Files. Perform install.
+    // We are not in Documents\Zapret yet. Perform install.
     try {
         fs::create_directories(targetDir);
 

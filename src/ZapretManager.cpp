@@ -2,7 +2,6 @@
 #include "HttpTester.h"
 #include "Utils.h"
 #include <windows.h>
-#include <tlhelp32.h>
 #include <filesystem>
 #include <thread>
 #include <chrono>
@@ -14,10 +13,24 @@ ZapretManager::ZapretManager() {
     GetModuleFileNameW(NULL, path, MAX_PATH);
     fs::path exePath(path);
     corePath = (exePath.parent_path() / L"zapret_core").wstring();
+
+    // Every process StartAlt() launches (and any children it spawns, e.g.
+    // winws.exe started from inside the .bat) gets assigned to this job.
+    // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE means closing the job handle also
+    // cleans everything up if the app crashes/exits unexpectedly.
+    hJob = CreateJobObjectW(NULL, NULL);
+    if (hJob) {
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = {};
+        jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        SetInformationJobObject(hJob, JobObjectExtendedLimitInformation, &jeli, sizeof(jeli));
+    }
 }
 
 ZapretManager::~ZapretManager() {
     // StopAlt(); // User controls when it stops
+    if (hJob) {
+        CloseHandle(hJob); // KILL_ON_JOB_CLOSE takes care of cleanup
+    }
 }
 
 std::vector<std::wstring> ZapretManager::GetAvailableAlts() {
@@ -50,7 +63,13 @@ bool ZapretManager::StartAlt(const std::wstring& altName) {
 
     std::wstring cmdLine = L"cmd.exe /c \"\"" + batPath + L"\"\"";
     
-    if (CreateProcessW(NULL, &cmdLine[0], NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, corePath.c_str(), &si, &pi)) {
+    if (CreateProcessW(NULL, &cmdLine[0], NULL, NULL, FALSE, CREATE_NO_WINDOW | CREATE_SUSPENDED, NULL, corePath.c_str(), &si, &pi)) {
+        // Assign to the job BEFORE resuming, so we never miss a fast-exiting
+        // cmd.exe that spawns winws.exe and returns immediately.
+        if (hJob) {
+            AssignProcessToJobObject(hJob, pi.hProcess);
+        }
+        ResumeThread(pi.hThread);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         
@@ -62,26 +81,18 @@ bool ZapretManager::StartAlt(const std::wstring& altName) {
 }
 
 void ZapretManager::StopAlt() {
-    HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
-    PROCESSENTRY32W pEntry;
-    pEntry.dwSize = sizeof(pEntry);
-
-    if (Process32FirstW(hSnapShot, &pEntry)) {
-        do {
-            if (wcscmp(pEntry.szExeFile, L"winws.exe") == 0 || wcscmp(pEntry.szExeFile, L"cmd.exe") == 0) { // Also kill batch scripts if running
-                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, 0, pEntry.th32ProcessID);
-                if (hProcess != NULL) {
-                    TerminateProcess(hProcess, 9);
-                    CloseHandle(hProcess);
-                }
-            }
-        } while (Process32NextW(hSnapShot, &pEntry));
+    // Terminate only the processes we ourselves launched (and their
+    // children) via the job object. This replaces the previous
+    // implementation, which killed every winws.exe *and every cmd.exe on
+    // the whole system* by process name — including ones that had nothing
+    // to do with this app.
+    if (hJob) {
+        TerminateJobObject(hJob, 9);
     }
-    CloseHandle(hSnapShot);
 }
 
 bool ZapretManager::TestAlt(const std::wstring& altName, std::function<void(const std::string&)> logCallback) {
-    if (logCallback) logCallback("Проверка: " + WstringToUtf8(altName));
+    if (logCallback) logCallback(u8"Проверка: " + WstringToUtf8(altName));
     if (!StartAlt(altName)) return false;
     
     // Test discord, youtube and tiktok
@@ -90,9 +101,9 @@ bool ZapretManager::TestAlt(const std::wstring& altName, std::function<void(cons
     bool tiktokWorks = HttpTester::TestConnection(L"tiktok.com");
     
     if (logCallback) {
-        std::string res = "  - Discord: " + std::string(discordWorks ? "OK" : "FAIL");
-        res += " | YouTube: " + std::string(youtubeWorks ? "OK" : "FAIL");
-        res += " | TikTok: " + std::string(tiktokWorks ? "OK" : "FAIL");
+        std::string res = "  - Discord: " + std::string(discordWorks ? u8"OK" : u8"FAIL");
+        res += " | YouTube: " + std::string(youtubeWorks ? u8"OK" : u8"FAIL");
+        res += " | TikTok: " + std::string(tiktokWorks ? u8"OK" : u8"FAIL");
         logCallback(res);
     }
 
